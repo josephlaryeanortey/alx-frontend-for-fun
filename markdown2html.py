@@ -1,96 +1,63 @@
 #!/usr/bin/python3
-import sys
-import os
+"""
+This is a script to convert a Markdown file to HTML.
+
+Usage:
+    ./markdown2html.py [input_file] [output_file]
+
+Arguments:
+    input_file: the name of the Markdown file to be converted
+    output_file: the name of the output HTML file
+
+Example:
+    ./markdown2html.py README.md README.html
+"""
+
+import argparse
+import pathlib
 import re
-import hashlib
+import sys  # Import sys to handle errors
 
-def print_usage_and_exit():
-    print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
-    sys.exit(1)
 
-def print_missing_file_and_exit(filename):
-    print(f"Missing {filename}", file=sys.stderr)
-    sys.exit(1)
+def convert_md_to_html(input_file, output_file):
+    '''
+    Converts markdown file to HTML file
+    '''
+    # Read the contents of the input file
+    with open(input_file, encoding='utf-8') as f:
+        md_content = f.readlines()
 
-def parse_headings(line):
-    heading_level = 0
-    while heading_level < len(line) and line[heading_level] == '#':
-        heading_level += 1
+    html_content = []
+    for line in md_content:
+        # Check if the line is a heading
+        match = re.match(r'(#){1,6} (.*)', line)
+        if match:
+            # Get the level of the heading
+            h_level = len(match.group(1))
+            # Get the content of the heading
+            h_content = match.group(2)
+            # Append the HTML equivalent of the heading
+            html_content.append(f'<h{h_level}>{h_content}</h{h_level}>\n')
+        else:
+            html_content.append(line)
 
-    if 1 <= heading_level <= 6:
-        return f"<h{heading_level}>{line[heading_level:].strip()}</h{heading_level}>\n"
-    return None
+    # Write the HTML content to the output file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.writelines(html_content)
 
-def parse_list(lines, ordered=False):
-    list_tag = "ol" if ordered else "ul"
-    html = f"<{list_tag}>\n"
-    for line in lines:
-        html += f"<li>{line.strip()[2:]}</li>\n"
-    html += f"</{list_tag}>\n"
-    return html
 
-def parse_lists(line):
-    if line.startswith('- '):
-        return 'unordered', line.strip()[2:]
-    elif line.startswith('* '):
-        return 'ordered', line.strip()[2:]
-    return None, None
+if __name__ == '__main__':
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Convert markdown to HTML')
+    parser.add_argument('input_file', help='path to input markdown file')
+    parser.add_argument('output_file', help='path to output HTML file')
+    args = parser.parse_args()
 
-def parse_bold_and_emphasis(text):
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'__(.*?)__', r'<em>\1</em>', text)
-    return text
+    # Check if the input file exists
+    input_path = pathlib.Path(args.input_file)
+    if not input_path.is_file():
+        print(f'Missing {input_path}', file=sys.stderr)  # sys is now correctly imported
+        sys.exit(1)
 
-def convert_md5(text):
-    return hashlib.md5(text.encode()).hexdigest()
-
-def remove_c(text):
-    return re.sub(r'[cC]', '', text)
-
-def parse_special_syntax(text):
-    text = re.sub(r'\[\[(.*?)\]\]', lambda x: convert_md5(x.group(1)), text)
-    text = re.sub(r'\(\((.*?)\)\)', lambda x: remove_c(x.group(1)), text)
-    return text
-
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print_usage_and_exit()
-
-    markdown_file = sys.argv[1]
-    html_file = sys.argv[2]
-
-    if not os.path.exists(markdown_file):
-        print_missing_file_and_exit(markdown_file)
-
-    with open(markdown_file, 'r') as md_file:
-        markdown_content = md_file.readlines()
-
-    in_list = False
-    list_type = None
-    list_lines = []
-
-    with open(html_file, 'w') as html_output:
-        for line in markdown_content:
-            line = parse_bold_and_emphasis(parse_special_syntax(line.strip()))
-            heading_html = parse_headings(line)
-            list_type_current, list_item = parse_lists(line)
-
-            if heading_html:
-                if in_list:
-                    html_output.write(parse_list(list_lines, ordered=(list_type == 'ordered')))
-                    in_list = False
-                    list_lines = []
-                html_output.write(heading_html)
-
-            elif list_type_current:
-                if not in_list:
-                    in_list = True
-                    list_type = list_type_current
-                list_lines.append(list_item)
-
-            else:
-                if in_list:
-                    html_output.write(parse_list(list_lines, ordered=(list_type == 'ordered')))
-                    in_list = False
-                    list_lines = []
-                html_output.write(f"<p>{line}</p>\n")
+    # Convert the markdown file to HTML
+    convert_md_to_html(args.input_file, args.output_file)
