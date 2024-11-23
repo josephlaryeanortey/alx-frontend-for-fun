@@ -1,31 +1,18 @@
-// Define the list to sort
-$list_to_sort: john, anna, zoe, kim, felicia, carrie;
+// 103-sort_strings.scss
+/* Sorts the variable $list_to_sort and prints the sorted list in the debug output */
 
-// Function to sort a list alphabetically
+// Use @use to import the required Sass list functions
+@use 'sass:list';
+
+$list_to_sort: john anna zoe kim felicia carrie;
+
+// Function to sort the list
 @function sort-list($list) {
-  $sorted: (); // Start with an empty list
-  $unsorted: $list;
-
-  @while length($unsorted) > 0 {
-    $min: nth($unsorted, 1); // Assume the first item is the smallest
-
-    // Find the smallest item in the list
-    @each $item in $unsorted {
-      @if $item < $min {
-        $min: $item;
-      }
-    }
-
-    // Add the smallest item to the sorted list
-    $sorted: append($sorted, $min);
-
-    // Remove the smallest item from the unsorted list
-    $unsorted: remove($unsorted, index($unsorted, $min));
-  }
-
-  @return $sorted;
+  @return list.sort($list); // Using list.sort to sort the list alphabetically
 }
 
-// Sort the list and debug the result
+// Sort the list
 $sorted_list: sort-list($list_to_sort);
+
+// Debug output the sorted list
 @debug $sorted_list;
