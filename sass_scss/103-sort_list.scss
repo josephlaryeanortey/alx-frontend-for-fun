@@ -1,1 +1,20 @@
-$list_to_sort: john anna zoe kim felicia carrie;
+// Define the list to sort
+$list_to_sort: john, anna, zoe, kim, felicia, carrie;
+
+// Function to sort a list
+@function sort-list($list) {
+  $sorted: ();
+  $unsorted: $list;
+
+  @while length($unsorted) > 0 {
+    $min: nth($unsorted, 1);
+    $unsorted: remove($unsorted, 1);
+
+    @each $item in $unsorted {
+      @if str-slice($item, 1) < str-slice($min, 1) {
+        $temp: ($item);
+        $newlist: string.StringDescriber....
+      }
+    }
+  }
+}@debug
